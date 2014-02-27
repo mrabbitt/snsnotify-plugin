@@ -15,6 +15,7 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
+import hudson.util.Secret;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -43,7 +44,7 @@ public class AmazonSNSNotifier extends Notifier {
         if (build.getResult() == Result.FAILURE || build.getResult() == Result.UNSTABLE) {
 
             String awsAccessKey = getDescriptor().getAwsAccessKey();
-            String awsSecretKey = getDescriptor().getAwsSecretKey();
+            String awsSecretKey = getDescriptor().getAwsSecretKey().getPlainText();
             String publishTopic = isEmpty(projectTopicArn) ? 
                 getDescriptor().getDefaultTopicArn() : projectTopicArn;
 
@@ -134,7 +135,7 @@ public class AmazonSNSNotifier extends Notifier {
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         private String awsAccessKey;
-        private String awsSecretKey;
+        private Secret awsSecretKey;
         private String defaultTopicArn;
 
         public DescriptorImpl() {
@@ -155,7 +156,7 @@ public class AmazonSNSNotifier extends Notifier {
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
             awsAccessKey = formData.getString("awsAccessKey");
-            awsSecretKey = formData.getString("awsSecretKey");
+            awsSecretKey = Secret.fromString(formData.getString("awsSecretKey"));
             defaultTopicArn = formData.getString("defaultTopicArn");
 
             save();
@@ -166,7 +167,7 @@ public class AmazonSNSNotifier extends Notifier {
             return awsAccessKey;
         }
 
-        public String getAwsSecretKey() {
+        public Secret getAwsSecretKey() {
             return awsSecretKey;
         }
 
@@ -179,7 +180,7 @@ public class AmazonSNSNotifier extends Notifier {
         }
 
         public void setAwsSecretKey(String awsSecretKey) {
-            this.awsSecretKey = awsSecretKey;
+            this.awsSecretKey = Secret.fromString(awsSecretKey);
         }
 
         public void setDefaultTopicArn(String defaultTopicArn) {
